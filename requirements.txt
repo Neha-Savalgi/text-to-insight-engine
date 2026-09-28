@@ -4,4 +4,8 @@ polars==1.44.2
 pyarrow==25.0.1
 pandas==3.0.2
 plotly==7.1.0
+<<<<<<< HEAD
 anthropic==1.7.0
+=======
+anthropic==1.7.0
+>>>>>>> a623ab1 (Add requirements, gitignore, and sample data)

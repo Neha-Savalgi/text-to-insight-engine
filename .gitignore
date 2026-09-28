@@ -1,0 +1,15 @@
+# Secrets: NEVER commit these
+.streamlit/secrets.toml
+.env
+# Python clutter
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+# Evaluation outputs you have not reviewed yet
+eval/results/*.tmp
+# Editor and OS files
+.vscode/
+.DS_Store
+.ipynb_checkpoints/
