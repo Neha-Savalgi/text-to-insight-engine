@@ -1,0 +1,7 @@
+streamlit==1.64.0
+duckdb==1.5.5
+polars==1.44.2
+pyarrow==25.0.1
+pandas==3.0.2
+plotly==7.1.0
+anthropic==1.7.0
