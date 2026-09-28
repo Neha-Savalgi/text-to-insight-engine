@@ -1,0 +1,4 @@
+[server]
+maxUploadSize = 50 # megabytes; keeps the free server from running out of memory
+[theme]
+primaryColor = "#4F46E5"
