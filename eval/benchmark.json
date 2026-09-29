@@ -1,0 +1,62 @@
+[
+  {
+    "id": "q01",
+    "difficulty": "easy",
+    "question": "What is the total revenue?",
+    "gold_sql": "SELECT SUM(revenue) FROM data"
+  },
+  {
+    "id": "q02",
+    "difficulty": "easy",
+    "question": "How many orders are there in each region?",
+    "gold_sql": "SELECT region, COUNT(*) FROM data GROUP BY region"
+  },
+  {
+    "id": "q03",
+    "difficulty": "easy",
+    "question": "What is the average unit price for each product category?",
+    "gold_sql": "SELECT product_category, AVG(unit_price) FROM data GROUP BY product_category"
+  },
+  {
+    "id": "q04",
+    "difficulty": "medium",
+    "question": "Which 3 products generated the most revenue?",
+    "gold_sql": "SELECT product, SUM(revenue) AS r FROM data GROUP BY product ORDER BY r DESC LIMIT 3"
+  },
+  {
+    "id": "q05",
+    "difficulty": "medium",
+    "question": "What was the total revenue in each year?",
+    "gold_sql": "SELECT year(order_date), SUM(revenue) FROM data GROUP BY 1"
+  },
+  {
+    "id": "q06",
+    "difficulty": "medium",
+    "question": "How many units were sold in December 2025?",
+    "gold_sql": "SELECT SUM(units) FROM data WHERE year(order_date) = 2025 AND month(order_date) = 12"
+  },
+  {
+    "id": "q07",
+    "difficulty": "medium",
+    "question": "What share of orders had any discount?",
+    "gold_sql": "SELECT AVG(CASE WHEN discount > 0 THEN 1.0 ELSE 0.0 END) FROM data"
+  },
+  {
+    "id": "q08",
+    "difficulty": "hard",
+    "question": "Which region had the highest revenue from Enterprise customers?",
+    "gold_sql": "SELECT region FROM data WHERE customer_segment = 'Enterprise' GROUP BY 1 ORDER BY SUM(revenue) DESC LIMIT 1"
+  },
+  {
+    "id": "q09",
+    "difficulty": "hard",
+    "question": "For each product category, what are the average units per order with and without a discount?",
+    "gold_sql": "SELECT product_category, discount > 0 AS discounted, AVG(units) FROM data GROUP BY 1, 2"
+  },
+  {
+    "id": "q10",
+    "difficulty": "hard",
+    "question": "Which month of 2024 had the highest revenue?",
+    "gold_sql": "SELECT month(order_date) FROM data WHERE year(order_date) = 2024 GROUP BY 1 ORDER BY SUM(revenue) DESC LIMIT 1"
+  }
+]
