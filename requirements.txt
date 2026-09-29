@@ -1,11 +1,7 @@
-streamlit==1.64.0
-duckdb==1.5.5
-polars==1.44.2
-pyarrow==25.0.1
-pandas==3.0.2
-plotly==7.1.0
-<<<<<<< HEAD
-anthropic==1.7.0
-=======
-anthropic==1.7.0
->>>>>>> a623ab1 (Add requirements, gitignore, and sample data)
+streamlit>=1.40
+duckdb>=1.1
+polars>=1.20
+pyarrow>=16
+pandas>=2.2
+plotly>=5.24
+anthropic>=0.40
