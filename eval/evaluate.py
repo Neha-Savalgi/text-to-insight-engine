@@ -19,40 +19,100 @@ from insight_engine.pipeline import InsightEngine
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def normalize(value):
-    if isinstance(value, float):
-        return round(value, 2)
+TRUE_WORDS = {"true", "yes", "y", "1", "with discount", "discounted", "discount"}
+FALSE_WORDS = {"false", "no", "n", "0", "no discount", "not discounted", "undiscounted"}
+MONTHS = ["january", "february", "march", "april", "may", "june", "july",
+          "august", "september", "october", "november", "december"]
+
+
+def forms(value):
+    """Return every reasonable written form of one cell value.
+
+    Two cells count as equal when their form sets overlap. This lets the engine
+    answer 2024-11-01 where the gold answer is 11, or 'With Discount' where the
+    gold answer is true, without accepting an answer that is actually different.
+    """
+    if value is None:
+        return {"none"}
     if isinstance(value, bool):
-        return int(value)
-    return str(value) if value is not None else None
+        return TRUE_WORDS if value else FALSE_WORDS
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        d = value.date() if isinstance(value, datetime.datetime) else value
+        return {d.isoformat(), f"{d.year}-{d.month:02d}", str(d.month), str(d.year),
+                MONTHS[d.month - 1]}
+    if isinstance(value, float):
+        return {f"{round(value, 2):g}"}
+    if isinstance(value, int):
+        return {str(value)}
+    text = str(value).strip().lower()
+    out = {text}
+    if text in TRUE_WORDS:
+        out |= TRUE_WORDS
+    if text in FALSE_WORDS:
+        out |= FALSE_WORDS
+    if text in MONTHS:
+        out.add(str(MONTHS.index(text) + 1))
+    try:                                   # numbers that arrived as text
+        out.add(f"{round(float(text), 2):g}")
+    except ValueError:
+        pass
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
+        y, m, _ = text.split("-")
+        out |= {f"{y}-{m}", str(int(m)), y, MONTHS[int(m) - 1]}
+    return out
+
+
+def canon(value):
+    """One plain form of a value, used by the strict metric."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, float):
+        return f"{round(value, 2):g}"
+    return str(value).strip().lower()
 
 
 def rows_of(df_or_rows):
     rows = df_or_rows.rows() if hasattr(df_or_rows, "rows") else df_or_rows
-    return [tuple(normalize(v) for v in row) for row in rows]
+    return [tuple(row) for row in rows]
 
 
-def strict_match(pred, gold):
-    """Same rows (ignoring row order and column order)."""
-    return Counter(tuple(sorted(map(str, r))) for r in pred) == Counter(
-        tuple(sorted(map(str, r))) for r in gold
-    )
-
-
-def lenient_match(pred, gold):
-    """Same number of rows, and every gold row's values appear inside one predicted row.
-    This forgives extra helpful columns, like showing revenue next to the top region."""
-    if len(pred) != len(gold):
-        return False
-    remaining = [Counter(map(str, r)) for r in pred]
-    for g in gold:
-        need = Counter(map(str, g))
-        hit = next((i for i, p in enumerate(remaining) if not need - p), None)
+def row_contains(pred_row, gold_row):
+    """True when every gold value matches a distinct value in the predicted row."""
+    remaining = [forms(v) for v in pred_row]
+    for gold_value in gold_row:
+        wanted = forms(gold_value)
+        hit = next((i for i, p in enumerate(remaining) if p & wanted), None)
         if hit is None:
             return False
         remaining.pop(hit)
     return True
 
+
+def strict_match(pred, gold):
+    """Same rows and same values, ignoring row order and column order."""
+    def key(rows):
+        return sorted(tuple(sorted(canon(v) for v in row)) for row in rows)
+
+    return len(pred) == len(gold) and key(pred) == key(gold)
+
+
+def lenient_match(pred, gold):
+    """Rank-aware containment.
+
+    The engine may add columns (revenue beside the winning region) and extra
+    rows below the ones asked for, but every gold row must appear inside the
+    first len(gold) predicted rows, so a model cannot pass by dumping the whole
+    table in the wrong order.
+    """
+    if not gold:
+        return not pred
+    remaining = list(pred[: len(gold)])
+    for gold_row in gold:
+        hit = next((i for i, p in enumerate(remaining) if row_contains(p, gold_row)), None)
+        if hit is None:
+            return False
+        remaining.pop(hit)
+    return True
 
 def main():
     parser = argparse.ArgumentParser()
